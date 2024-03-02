@@ -7,6 +7,9 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
+python-dotenv = "^1.0.1"
+pyrogram = "^2.0.106"
+tgcrypto = "^1.2.5"
 
 
 [build-system]
