@@ -5,6 +5,8 @@ from typing import AsyncGenerator
 from pyrogram.types import Message
 import asyncio
 
+from services import writing_json
+
 load_dotenv('.env')  # загружаем данные из виртуального окружения
 
 api_id = os.getenv('TELEGRAM_API_ID')  # получаем api_id, полученный у Telegram
@@ -45,8 +47,16 @@ async def copy_content(from_channel_id: int, to_channel_id: int):
     # делаем реверс списка сообщений, чтобы они шли в правильном порядке
     reversed_messages = await revers_messages(messages=messages)
 
+    # получаем id последнего сообщения
+    last_message_id = reversed_messages[-1:][0].id
+
+    # записываем данные канала в словарь
+    channel_last_message = {str(from_channel_id): last_message_id}
+    channels_list = [channel_last_message]
+    writing_json(channels_list)
+
     for message in reversed_messages:
-        print(message)
+        # print(message)
         # await message.copy(chat_id=to_channel_id)
         if message.text:
             text = message.text
@@ -55,12 +65,17 @@ async def copy_content(from_channel_id: int, to_channel_id: int):
 
         elif message.photo:
             photo = await message.download(in_memory=True)
-            await client.send_photo(chat_id=to_channel_id, photo=photo)
+            await client.send_photo(chat_id=to_channel_id, photo=photo, caption=message.caption)
 
     await client.stop()
 
+    return channel_last_message
 
-# asyncio.run(copy_content(from_channel_id=-1001202159807, to_channel_id=-1002125329969))
+
+a = asyncio.run(copy_content(from_channel_id=-1001340588812, to_channel_id=-1002125329969))  # степик
+print(a)
+# asyncio.run(copy_content(from_channel_id=-1001202159807, to_channel_id=-1002125329969))  # банки
 # asyncio.run(copy_content(from_channel_id=-1001606563124, to_channel_id=-1002125329969))  # skypro чат
-asyncio.run(copy_content(from_channel_id=-1002040166896, to_channel_id=-1002125329969))  # kats
-
+# asyncio.run(copy_content(from_channel_id=-1002040166896, to_channel_id=-1002125329969))  # kats
+# asyncio.run(copy_content(from_channel_id=-1004087771187, to_channel_id=-1002125329969))  # 1-point
+# asyncio.run(copy_content(from_channel_id=-100, to_channel_id=-1002125329969))  #
