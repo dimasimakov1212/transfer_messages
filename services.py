@@ -26,7 +26,7 @@ async def get_channel_id(client: Client, message: Message):
 
 
 async def start_search():
-    """ Запуск отслеживания сообщения пользователя """
+    """ Запуск отслеживания сообщения пользователя в закрытом канале """
 
     # создаем клиент
     client = Client(name=session_name, api_id=api_id, api_hash=api_hash)
@@ -41,5 +41,5 @@ async def start_search():
         await client.stop()
 
 
-if __name__ == '__main__':
-    asyncio.run(start_search())
+# if __name__ == '__main__':
+#     asyncio.run(start_search())

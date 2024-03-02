@@ -42,17 +42,25 @@ async def copy_content(from_channel_id: int, to_channel_id: int):
     messages: AsyncGenerator[Message, None] = client.get_chat_history(chat_id=from_channel_id,
                                                                       limit=2)
 
-    # делаем реверс сообщений, чтобы они шли в правильном порядке
+    # делаем реверс списка сообщений, чтобы они шли в правильном порядке
     reversed_messages = await revers_messages(messages=messages)
 
     for message in reversed_messages:
         print(message)
-        await message.copy(chat_id=to_channel_id)
+        # await message.copy(chat_id=to_channel_id)
+        if message.text:
+            text = message.text
+            print(text)
+            await client.send_message(chat_id=to_channel_id, text=text)
+
+        elif message.photo:
+            photo = await message.download(in_memory=True)
+            await client.send_photo(chat_id=to_channel_id, photo=photo)
 
     await client.stop()
 
 
 # asyncio.run(copy_content(from_channel_id=-1001202159807, to_channel_id=-1002125329969))
 # asyncio.run(copy_content(from_channel_id=-1001606563124, to_channel_id=-1002125329969))  # skypro чат
-# asyncio.run(copy_content(from_channel_id=-1002040166896, to_channel_id=-1002125329969))  # kats
+asyncio.run(copy_content(from_channel_id=-1002040166896, to_channel_id=-1002125329969))  # kats
 
