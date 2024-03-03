@@ -53,5 +53,45 @@ def writing_json(data_list):
         json.dump(data_list, file, sort_keys=False, indent=4, ensure_ascii=False)
 
 
+def reading_json():
+    """ Считывает данные из формата json """
+
+    try:
+        with open(file_last_messages_json, 'r', encoding='utf-8') as file:
+            data_list = json.load(file)
+        return data_list
+    except FileNotFoundError:
+        print('Файла пока не существует, будет создан новый файл')
+        data_list = []
+        return data_list
+
+
+async def get_last_message_id(channel_id: int):
+    """
+    Получает ID последнего сообщения в канале
+    :param channel_id: ID канала
+    :return: ID сообщения
+    """
+
+    # создаем клиент
+    client = Client(name=session_name, api_id=api_id, api_hash=api_hash)
+
+    # запускаем клиент
+    await client.start()
+
+    # получаем последнее сообщение
+    last_message = client.get_chat_history(chat_id=channel_id, limit=1)
+
+    async for item in last_message:
+        last_message_id = item.id
+
+        await client.stop()
+
+        return last_message_id
+
+
 if __name__ == '__main__':
-    asyncio.run(start_search())
+    # asyncio.run(start_search())
+    a = asyncio.run(get_last_message_id(-1001340588812))  # степик
+    # a = asyncio.run(get_last_message_id(-1002040166896))  # kats
+    print(a)
