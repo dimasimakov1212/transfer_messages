@@ -84,6 +84,7 @@ async def get_last_message_id(channel_id: int):
 
     async for item in last_message:
         last_message_id = item.id
+        # print(item)
 
         await client.stop()
 
@@ -92,6 +93,6 @@ async def get_last_message_id(channel_id: int):
 
 if __name__ == '__main__':
     # asyncio.run(start_search())
-    a = asyncio.run(get_last_message_id(-1001340588812))  # степик
-    # a = asyncio.run(get_last_message_id(-1002040166896))  # kats
+    # a = asyncio.run(get_last_message_id(-1001340588812))  # степик
+    a = asyncio.run(get_last_message_id(-1001604435961))  # релок
     print(a)

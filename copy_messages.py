@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import os
+import time
 from pyrogram import Client
 from typing import AsyncGenerator
 from pyrogram.types import Message
@@ -68,6 +69,8 @@ async def copy_content(from_channel_id: int, messages_number=1):
             photo = await message.download(in_memory=True)
             await client.send_photo(chat_id=to_channel_id, photo=photo, caption=message.caption)
 
+        time.sleep(0.2)
+
     await client.stop()
 
     return channel_last_message
@@ -102,16 +105,15 @@ def start_copying():
             # добавляем данные канала в новый список
             new_channels_list.append(channel_last_message)
 
+            time.sleep(2)
+
     # записываем обновленные данные о каналах
     writing_json(new_channels_list)
 
 
 # a = asyncio.run(copy_content(from_channel_id=-1001340588812, to_channel_id=-1002125329969))  # степик
 # print(a)
-# asyncio.run(copy_content(from_channel_id=-1001202159807, to_channel_id=-1002125329969))  # банки
 # asyncio.run(copy_content(from_channel_id=-1001606563124, to_channel_id=-1002125329969))  # skypro чат
-# asyncio.run(copy_content(from_channel_id=-1002040166896, to_channel_id=-1002125329969))  # kats
 # asyncio.run(copy_content(from_channel_id=-1004087771187, to_channel_id=-1002125329969))  # 1-point
-# asyncio.run(copy_content(from_channel_id=-100, to_channel_id=-1002125329969))  #
 
 start_copying()
