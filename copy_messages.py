@@ -58,18 +58,38 @@ async def copy_content(from_channel_id: int, messages_number=1):
 
     # пересылаем сообщения в общий канал
     for message in reversed_messages:
-        # print(message)
+
         # await message.copy(chat_id=to_channel_id)
+
+        # проверяем наличие текста сообщения
         if message.text:
             text = message.text
-            # print(text)
             await client.send_message(chat_id=to_channel_id, text=text)
 
-        elif message.photo:
+            time.sleep(0.2)
+
+        # проверяем наличие фото
+        if message.photo:
             photo = await message.download(in_memory=True)
             await client.send_photo(chat_id=to_channel_id, photo=photo, caption=message.caption)
 
-        time.sleep(0.2)
+            time.sleep(0.2)
+
+        # проверяем наличие кнопок
+        if message.reply_markup:
+            buttons = message.reply_markup.inline_keyboard
+
+            for button in buttons:
+
+                text_button = button[0].text
+                url_button = button[0].url
+
+                text = f'{text_button}\n{url_button}'
+                await client.send_message(chat_id=to_channel_id, text=text)
+
+                time.sleep(0.2)
+
+        time.sleep(0.4)
 
     await client.stop()
 
@@ -97,13 +117,16 @@ def start_copying():
 
             # получаем количество сообщений, которые необходимо переслать
             messages_number = last_message_id - last_copied_message_id
+            print(messages_number)
 
-            # запускаем копирование сообщений
-            channel_last_message = asyncio.run(copy_content(from_channel_id=channel_id,
-                                                            messages_number=messages_number))
+            if messages_number > 0:
 
-            # добавляем данные канала в новый список
-            new_channels_list.append(channel_last_message)
+                # запускаем копирование сообщений
+                channel_last_message = asyncio.run(copy_content(from_channel_id=channel_id,
+                                                                messages_number=messages_number))
+
+                # добавляем данные канала в новый список
+                new_channels_list.append(channel_last_message)
 
             time.sleep(2)
 
@@ -113,7 +136,5 @@ def start_copying():
 
 # a = asyncio.run(copy_content(from_channel_id=-1001340588812, to_channel_id=-1002125329969))  # степик
 # print(a)
-# asyncio.run(copy_content(from_channel_id=-1001606563124, to_channel_id=-1002125329969))  # skypro чат
-# asyncio.run(copy_content(from_channel_id=-1004087771187, to_channel_id=-1002125329969))  # 1-point
 
 start_copying()
