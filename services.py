@@ -1,5 +1,6 @@
 import json
 
+import pyrogram
 from dotenv import load_dotenv
 import os
 from pyrogram import Client, idle
@@ -15,8 +16,11 @@ username = os.getenv('TELEGRAM_USERNAME')  # получаем имя польз�
 
 session_name = f'{username}'  # формируем имя файла сессии Telegram
 
-# получаем путь к файлу, в котором хранятся каналы
+# путь к файлу, в котором хранятся ID каналов и ID последних скопированных сообщений
 file_last_messages_json = os.path.abspath(f'./last_messages.json')
+
+# путь к файлу, в котором хранятся каналы для поиска
+file_channels_txt = os.path.abspath(f'./my_channels.txt')
 
 
 async def get_channel_id(client: Client, message: Message):
@@ -91,8 +95,81 @@ async def get_last_message_id(channel_id: int):
         return last_message_id
 
 
+def reading_txt():
+    """ Считывает построчно данные из файла txt """
+
+    try:
+        with open(file_channels_txt, 'r') as file:
+            channels = file.read().splitlines()
+        return channels
+    except FileNotFoundError:
+        print('Файла пока не существует, проверьте данные')
+        channels = []
+        return channels
+
+
+def preparing_channels(channels_list):
+    """
+    Подготовка имени канала для поиска
+    :param channels_list: список каналов
+    :return: список каналов для поиска
+    """
+
+    # новый список для каналов
+    new_channels_list = []
+
+    for channel in channels_list:
+        if 'https://t.me' in channel:
+            prepared_name = channel.split('/')[-1:][0]
+            new_channels_list.append(prepared_name)
+
+        else:
+            new_channels_list.append(channel)
+
+    print(new_channels_list)
+
+
+async def searching_channels_by_title(channel_title):
+    """
+    Поиск ID канала по его названию
+    :param channel_title: название канала
+    :return: ID канала
+    """
+
+    # список для каналов
+    channels_list = []
+
+    # создаем клиент
+    client = Client(name=session_name, api_id=api_id, api_hash=api_hash)
+
+    # запускаем клиент
+    await client.start()
+
+    # делаем поиск каналов
+    search = await client.invoke(pyrogram.raw.functions.contacts.Search(q=channel_title, limit=3))
+
+    # проверяем список найденных каналов
+    for chat in search.chats:
+
+        channel_id = chat.id  # ID канала
+
+        # если ID канала составляет 10 символов, добавляем префикс
+        if len(str(channel_id)) == 10:
+            channel_id = int('-100' + str(channel_id))
+
+        channel = {chat.title: channel_id}  # упаковываем в словарь
+        channels_list.append(channel)  # добавляем в список
+
+    await client.stop()
+
+    return channels_list
+
+
 if __name__ == '__main__':
     # asyncio.run(start_search())
     # a = asyncio.run(get_last_message_id(-1001340588812))  # степик
-    a = asyncio.run(get_last_message_id(-1001604435961))  # релок
+    # a = asyncio.run(get_last_message_id(-1001604435961))  # релок
+    # print(a)
+    # preparing_channels(['@bankrollo', 'https://t.me/juniors_rabota_jobs', 'Экономика по Потапенко | Сообщество поклонников'])
+    a = asyncio.run(searching_channels_by_title('Экономика по Потапенко | Сообщество поклонников'))
     print(a)
