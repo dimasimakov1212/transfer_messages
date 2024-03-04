@@ -117,8 +117,8 @@ def start_copying():
 
             # получаем количество сообщений, которые необходимо переслать
             messages_number = last_message_id - last_copied_message_id
-            print(messages_number)
 
+            # проверяем есть ли не переправленные сообщения
             if messages_number > 0:
 
                 # запускаем копирование сообщений
@@ -128,13 +128,14 @@ def start_copying():
                 # добавляем данные канала в новый список
                 new_channels_list.append(channel_last_message)
 
+            else:
+                print('Новых сообщений нет')
+
             time.sleep(2)
 
     # записываем обновленные данные о каналах
     writing_json(new_channels_list)
 
 
-# a = asyncio.run(copy_content(from_channel_id=-1001340588812, to_channel_id=-1002125329969))  # степик
-# print(a)
-
-start_copying()
+if __name__ == '__main__':
+    start_copying()

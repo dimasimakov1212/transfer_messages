@@ -126,7 +126,7 @@ def preparing_channels(channels_list):
         else:
             new_channels_list.append(channel)
 
-    print(new_channels_list)
+    return new_channels_list
 
 
 async def searching_channels_by_title(channel_title):
@@ -153,10 +153,6 @@ async def searching_channels_by_title(channel_title):
 
         channel_id = chat.id  # ID канала
 
-        # если ID канала составляет 10 символов, добавляем префикс
-        if len(str(channel_id)) == 10:
-            channel_id = int('-100' + str(channel_id))
-
         channel = {chat.title: channel_id}  # упаковываем в словарь
         channels_list.append(channel)  # добавляем в список
 
@@ -165,11 +161,21 @@ async def searching_channels_by_title(channel_title):
     return channels_list
 
 
-if __name__ == '__main__':
-    # asyncio.run(start_search())
-    # a = asyncio.run(get_last_message_id(-1001340588812))  # степик
-    # a = asyncio.run(get_last_message_id(-1001604435961))  # релок
+def check_id(channel_id):
+    """
+    Проверяет ID канала на соответствие требованиям
+    :param channel_id: ID канала
+    :return: обновленный ID канала
+    """
+
+    # если ID канала составляет 10 символов, добавляем префикс
+    if len(str(channel_id)) == 10:
+        channel_id = int('-100' + str(channel_id))
+
+    return channel_id
+
+
+# if __name__ == '__main__':
+
+    # a = asyncio.run(get_last_message_id(-1001989338321))  #
     # print(a)
-    # preparing_channels(['@bankrollo', 'https://t.me/juniors_rabota_jobs', 'Экономика по Потапенко | Сообщество поклонников'])
-    a = asyncio.run(searching_channels_by_title('Экономика по Потапенко | Сообщество поклонников'))
-    print(a)
