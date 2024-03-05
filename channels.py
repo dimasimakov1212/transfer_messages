@@ -2,8 +2,6 @@ from dotenv import load_dotenv
 import os
 import time
 from pyrogram import Client
-from typing import AsyncGenerator
-from pyrogram.types import Message
 import asyncio
 
 from services import reading_txt, preparing_channels, check_id, get_last_message_id, writing_json
@@ -15,8 +13,6 @@ api_hash = os.getenv('TELEGRAM_API_HASH')  # получаем api_hash, полу
 username = os.getenv('TELEGRAM_USERNAME')  # получаем имя пользователя для задания имени файла сессии
 
 session_name = f'{username}'  # формируем имя файла сессии Telegram
-
-to_channel_id = -1002125329969  # ID канала, куда пересылать сообщения
 
 
 async def get_channel_id(channel_username):
@@ -50,11 +46,9 @@ def get_channels():
 
     # получаем список каналов
     channels_list = reading_txt()
-    print(channels_list)
 
     # преобразуем список для последующего поиска
     channels_list_for_searching = preparing_channels(channels_list)
-    print(channels_list_for_searching)
 
     # получаем список ID каналов
     id_list = []  # новый список для ID каналов
@@ -70,8 +64,6 @@ def get_channels():
 
         time.sleep(0.2)
 
-    print(id_list)
-
     # преобразуем ID для последующего поиска
     id_list_for_searching = []  # новый список для ID каналов
 
@@ -83,8 +75,6 @@ def get_channels():
             else:
                 new_id = check_id(volume)  # проверяем ID
                 id_list_for_searching.append(new_id)  # добавляем ID в новый список
-
-    print(id_list_for_searching)
 
     # запускаем поиск последних сообщений в каналах
     channels_with_messages = []  # новый список для каналов и сообщений
@@ -99,12 +89,14 @@ def get_channels():
 
         time.sleep(0.2)
 
-    print(channels_with_messages)
-
     # записываем полученные данные о ID каналов и ID последних сообщений в файл
     writing_json(channels_with_messages)
 
 
 if __name__ == '__main__':
 
+    # Запуск поиска каналов из файла my_channels.txt со списком каналов (ботов, чатов)
+    # формируется файл last_messages.json, в котором хранятся данные в виде:
+    # ID канала: ID последнего сообщения в канале
+    # при последующем запуске пересылки сообщений, берутся сообщения начиная от этих данных
     get_channels()
