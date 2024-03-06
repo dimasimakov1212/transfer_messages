@@ -19,6 +19,26 @@ session_name = f'{username}'  # формируем имя файла сесси�
 to_channel_id = os.getenv('GENERAL_CHANNEL_ID')  # ID канала, куда пересылать сообщения
 
 
+async def get_message_from_channel(from_channel_id, message_id):
+    """
+    Получаем сообщение из канала по его ID
+    :param from_channel_id: ID канала, из которого получаем сообщение
+    :param message_id: ID сообщения
+    :return:
+    """
+
+    # создаем клиент
+    client = Client(name=session_name, api_id=api_id, api_hash=api_hash)
+
+    # запускаем клиент
+    await client.start()
+
+    message = await client.get_messages(from_channel_id, message_id)
+    print(message)
+
+    await client.stop()
+
+
 async def revers_messages(messages: AsyncGenerator):
     """
     Переворачивает список сообщений, чтобы они шли в правильном порядке
@@ -60,20 +80,36 @@ async def copy_content(from_channel_id: int, messages_number=1):
     for message in reversed_messages:
 
         # await message.copy(chat_id=to_channel_id)
+        # print(message)
 
         # проверяем наличие текста сообщения
         if message.text:
             text = message.text
             await client.send_message(chat_id=to_channel_id, text=text)
 
-            time.sleep(0.2)
+            time.sleep(1)
 
         # проверяем наличие фото
         if message.photo:
             photo = await message.download(in_memory=True)
             await client.send_photo(chat_id=to_channel_id, photo=photo, caption=message.caption)
 
-            time.sleep(0.2)
+            time.sleep(1)
+
+        # проверяем наличие видео
+        if message.video:
+            video = await message.download(in_memory=True)
+            await client.send_video(chat_id=to_channel_id, video=video, caption=message.caption)
+
+            time.sleep(1)
+
+        # проверяем наличие пересланного сообщения
+        if message.forward_from_chat:
+            from_chat_id = message.forward_from_chat.id
+            # print(from_chat_id)
+            # await client.send_message(chat_id=to_channel_id, text=text)
+
+            time.sleep(1)
 
         # проверяем наличие кнопок
         if message.reply_markup:
@@ -87,9 +123,9 @@ async def copy_content(from_channel_id: int, messages_number=1):
                 text = f'{text_button}\n{url_button}'
                 await client.send_message(chat_id=to_channel_id, text=text)
 
-                time.sleep(0.2)
+                time.sleep(1)
 
-        time.sleep(0.4)
+        time.sleep(1)
 
     await client.stop()
 
@@ -144,3 +180,4 @@ if __name__ == '__main__':
     # пересылаться будут сообщения, которые еще не пересылались
     # если новых сообщений нет, в терминал выводится сообщение
     start_copying()
+    # a = asyncio.run(get_message_from_channel(-1001369541919, 6725))
