@@ -1,2 +1,2 @@
-@Exampl_bot
-https://t.me/example_channel
+@Dimas_Habit_bot
+https://t.me/bankrollo

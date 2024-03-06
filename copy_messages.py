@@ -130,6 +130,7 @@ def start_copying():
 
             else:
                 print('Новых сообщений нет')
+                new_channels_list.append(channel)
 
             time.sleep(2)
 
