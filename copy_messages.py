@@ -82,13 +82,6 @@ async def copy_content(from_channel_id: int, messages_number=1):
         # await message.copy(chat_id=to_channel_id)
         # print(message)
 
-        # проверяем наличие текста сообщения
-        if message.text:
-            text = message.text
-            await client.send_message(chat_id=to_channel_id, text=text)
-
-            time.sleep(1)
-
         # проверяем наличие фото
         if message.photo:
             photo = await message.download(in_memory=True)
@@ -111,8 +104,12 @@ async def copy_content(from_channel_id: int, messages_number=1):
 
             time.sleep(1)
 
-        # проверяем наличие кнопок
-        if message.reply_markup:
+        # проверяем наличие текста сообщения с кнопками
+        if message.text and message.reply_markup:
+            text = message.text
+            print(type(text))
+            print(text)
+
             buttons = message.reply_markup.inline_keyboard
 
             for button in buttons:
@@ -120,10 +117,21 @@ async def copy_content(from_channel_id: int, messages_number=1):
                 text_button = button[0].text
                 url_button = button[0].url
 
-                text = f'{text_button}\n{url_button}'
-                await client.send_message(chat_id=to_channel_id, text=text)
+                text += f'\n\n{text_button}\n{url_button}'
 
-                time.sleep(1)
+            print(text)
+
+            await client.send_message(chat_id=to_channel_id, text=text)
+
+            time.sleep(1)
+            continue
+
+        # проверяем наличие текста сообщения
+        if message.text:
+            text = message.text
+            await client.send_message(chat_id=to_channel_id, text=text)
+
+            time.sleep(1)
 
         time.sleep(1)
 
