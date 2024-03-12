@@ -120,7 +120,8 @@ def get_channels():
                 pass
 
             else:  # если канала нет в БД, заносим данные канала в БД
-                cursor.execute('INSERT INTO Channels (name, channel_id, last_message_id, tags) VALUES (?, ?, ?, ?)',
+                cursor.execute("""INSERT INTO Channels 
+                (name, channel_id, last_message_id, tags) VALUES (?, ?, ?, ?)""",
                                channel_data)
 
                 connection.commit()  # сохраняем изменения в БД
@@ -128,22 +129,6 @@ def get_channels():
         time.sleep(1)
 
     connection.close()  # закрываем соединение с БД
-
-    # # запускаем поиск последних сообщений в каналах
-    # channels_with_messages = []  # новый список для каналов и сообщений
-    #
-    # for channel_id in id_list_for_searching:
-    #
-    #     # получаем ID последнего сообщения в канале
-    #     last_message_id = asyncio.run(get_last_message_id(channel_id))
-    #
-    #     channel = {str(channel_id): last_message_id}  # упаковываем в словарь
-    #     channels_with_messages.append(channel)  # добавляем в список
-    #
-    #     time.sleep(0.2)
-    #
-    # # записываем полученные данные о ID каналов и ID последних сообщений в файл
-    # writing_json(channels_with_messages)
 
 
 def check_bd():
@@ -164,5 +149,5 @@ if __name__ == '__main__':
     # формируется файл last_messages.json, в котором хранятся данные в виде:
     # ID канала: ID последнего сообщения в канале
     # при последующем запуске пересылки сообщений, берутся сообщения начиная от этих данных
-    # get_channels()
-    check_bd()
+    get_channels()
+    # check_bd()
