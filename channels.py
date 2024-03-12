@@ -1,3 +1,5 @@
+import sqlite3
+
 from dotenv import load_dotenv
 import os
 import time
@@ -44,8 +46,11 @@ def get_channels():
     :return:
     """
 
-    # получаем список каналов
-    channels_list = reading_txt()
+    data_list = reading_txt()  # получаем данные из файла со списком каналов
+
+    channels_tags = data_list[0]  # выделяем хэштеги каналов
+
+    channels_list = data_list[1:]  # получаем список каналов
 
     # преобразуем список для последующего поиска
     channels_list_for_searching = preparing_channels(channels_list)
@@ -62,35 +67,85 @@ def get_channels():
 
         id_list.append(channel_dict)  # добавляем в список
 
-        time.sleep(0.2)
+        time.sleep(1)
 
     # преобразуем ID для последующего поиска
-    id_list_for_searching = []  # новый список для ID каналов
+    # id_list_for_searching = []  # новый список для ID каналов
+    finish_channels_list = []
 
     for channel_dict in id_list:
 
         for key, volume in channel_dict.items():
             if 'bot' in key.lower():
-                id_list_for_searching.append(volume)
+                finish_channels_list.append(channel_dict)
             else:
                 new_id = check_id(volume)  # проверяем ID
-                id_list_for_searching.append(new_id)  # добавляем ID в новый список
+                channel_dict[key] = new_id
+                finish_channels_list.append(channel_dict)  # добавляем ID в новый список
 
-    # запускаем поиск последних сообщений в каналах
-    channels_with_messages = []  # новый список для каналов и сообщений
+    print(finish_channels_list)
 
-    for channel_id in id_list_for_searching:
+    # Устанавливаем соединение с базой данных
+    connection = sqlite3.connect('channels_database.db')
+    cursor = connection.cursor()  # создаем курсор
 
-        # получаем ID последнего сообщения в канале
-        last_message_id = asyncio.run(get_last_message_id(channel_id))
+    # создаем таблицу с каналами
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS Channels (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    channel_id INTEGER NOT NULL,
+    last_message_id INTEGER,
+    tags TEXT
+    )
+    ''')
 
-        channel = {str(channel_id): last_message_id}  # упаковываем в словарь
-        channels_with_messages.append(channel)  # добавляем в список
+    # перебираем список каналов и заносим в БД
+    for channel in finish_channels_list:
+        for key, volume in channel.items():
 
-        time.sleep(0.2)
+            # получаем ID последнего сообщения в канале
+            last_message_id = asyncio.run(get_last_message_id(volume))
 
-    # записываем полученные данные о ID каналов и ID последних сообщений в файл
-    writing_json(channels_with_messages)
+            # задаем данные для занесения в БД
+            channel_data = (
+                key,  # название канала
+                volume,  # ID канала
+                last_message_id,  # ID последнего сообщения в канале
+                channels_tags  # хэштеги канала
+            )
+
+            # заносим данные канала в БД
+            cursor.execute('INSERT INTO Channels (name, channel_id, last_message_id, tags) VALUES (?, ?, ?, ?)',
+                           channel_data)
+
+            connection.commit()  # сохраняем изменения в БД
+
+        time.sleep(1)
+
+    cursor.execute('SELECT * FROM Channels')
+    ch = cursor.fetchall()
+
+    for i in ch:
+        print(i)
+
+    connection.close()  # закрываем соединение с БД
+
+    # # запускаем поиск последних сообщений в каналах
+    # channels_with_messages = []  # новый список для каналов и сообщений
+    #
+    # for channel_id in id_list_for_searching:
+    #
+    #     # получаем ID последнего сообщения в канале
+    #     last_message_id = asyncio.run(get_last_message_id(channel_id))
+    #
+    #     channel = {str(channel_id): last_message_id}  # упаковываем в словарь
+    #     channels_with_messages.append(channel)  # добавляем в список
+    #
+    #     time.sleep(0.2)
+    #
+    # # записываем полученные данные о ID каналов и ID последних сообщений в файл
+    # writing_json(channels_with_messages)
 
 
 if __name__ == '__main__':

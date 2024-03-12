@@ -84,14 +84,18 @@ async def copy_content(from_channel_id: int, messages_number=1):
 
         # проверяем наличие фото
         if message.photo:
-            photo = await message.download(in_memory=True)
+            photo = await message.download(in_memory=True)  # скачиваем фото
+
+            # отправляем сообщение в общий канал
             await client.send_photo(chat_id=to_channel_id, photo=photo, caption=message.caption)
 
             time.sleep(1)
 
         # проверяем наличие видео
         if message.video:
-            video = await message.download(in_memory=True)
+            video = await message.download(in_memory=True)  # скачиваем видео
+
+            # отправляем сообщение в общий канал
             await client.send_video(chat_id=to_channel_id, video=video, caption=message.caption)
 
             time.sleep(1)
@@ -106,22 +110,19 @@ async def copy_content(from_channel_id: int, messages_number=1):
 
         # проверяем наличие текста сообщения с кнопками
         if message.text and message.reply_markup:
-            text = message.text
-            print(type(text))
-            print(text)
 
-            buttons = message.reply_markup.inline_keyboard
+            text = message.text  # получаем текст сообщения
+
+            buttons = message.reply_markup.inline_keyboard  # получаем кнопки
 
             for button in buttons:
 
-                text_button = button[0].text
-                url_button = button[0].url
+                text_button = button[0].text  # текст кнопки
+                url_button = button[0].url  # ссылка кнопки
 
-                text += f'\n\n{text_button}\n{url_button}'
+                text += f'\n\n{text_button}\n{url_button}'  # добавляем содержимое кнопки к тексту сообщения
 
-            print(text)
-
-            await client.send_message(chat_id=to_channel_id, text=text)
+            await client.send_message(chat_id=to_channel_id, text=text)  # отправляем сообщение в общий канал
 
             time.sleep(1)
             continue
