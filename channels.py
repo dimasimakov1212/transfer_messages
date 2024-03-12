@@ -56,7 +56,7 @@ def get_channels():
     channels_list_for_searching = preparing_channels(channels_list)
 
     # получаем список ID каналов
-    id_list = []  # новый список для ID каналов
+    channels_dicts_list = []  # новый список для ID каналов
 
     for channel in channels_list_for_searching:
 
@@ -65,25 +65,22 @@ def get_channels():
 
         channel_dict = {channel: channel_id}  # упаковываем в словарь
 
-        id_list.append(channel_dict)  # добавляем в список
+        channels_dicts_list.append(channel_dict)  # добавляем в список
 
         time.sleep(1)
 
     # преобразуем ID для последующего поиска
-    # id_list_for_searching = []  # новый список для ID каналов
     finish_channels_list = []
 
-    for channel_dict in id_list:
+    for channel_dict in channels_dicts_list:
 
         for key, volume in channel_dict.items():
-            if 'bot' in key.lower():
+            if 'bot' in key.lower():  # если это бот, то добавляем без изменений
                 finish_channels_list.append(channel_dict)
             else:
                 new_id = check_id(volume)  # проверяем ID
                 channel_dict[key] = new_id
                 finish_channels_list.append(channel_dict)  # добавляем ID в новый список
-
-    print(finish_channels_list)
 
     # Устанавливаем соединение с базой данных
     connection = sqlite3.connect('channels_database.db')
@@ -115,19 +112,20 @@ def get_channels():
                 channels_tags  # хэштеги канала
             )
 
-            # заносим данные канала в БД
-            cursor.execute('INSERT INTO Channels (name, channel_id, last_message_id, tags) VALUES (?, ?, ?, ?)',
-                           channel_data)
+            # проверяем существует ли канал в БД
+            cursor.execute('SELECT COUNT(*) FROM Channels WHERE channel_id = ?', (volume, ))
+            check_channel = cursor.fetchone()[0]
 
-            connection.commit()  # сохраняем изменения в БД
+            if check_channel > 0:  # если канал существует, пропускаем его
+                pass
+
+            else:  # если канала нет в БД, заносим данные канала в БД
+                cursor.execute('INSERT INTO Channels (name, channel_id, last_message_id, tags) VALUES (?, ?, ?, ?)',
+                               channel_data)
+
+                connection.commit()  # сохраняем изменения в БД
 
         time.sleep(1)
-
-    cursor.execute('SELECT * FROM Channels')
-    ch = cursor.fetchall()
-
-    for i in ch:
-        print(i)
 
     connection.close()  # закрываем соединение с БД
 
@@ -148,10 +146,23 @@ def get_channels():
     # writing_json(channels_with_messages)
 
 
+def check_bd():
+    # Устанавливаем соединение с базой данных
+    connection = sqlite3.connect('channels_database.db')
+    cursor = connection.cursor()  # создаем курсор
+
+    cursor.execute('SELECT * FROM Channels')
+    ch = cursor.fetchall()
+    print(ch)
+
+    connection.close()  # закрываем соединение с БД
+
+
 if __name__ == '__main__':
 
     # Запуск поиска каналов из файла my_channels.txt со списком каналов (ботов, чатов)
     # формируется файл last_messages.json, в котором хранятся данные в виде:
     # ID канала: ID последнего сообщения в канале
     # при последующем запуске пересылки сообщений, берутся сообщения начиная от этих данных
-    get_channels()
+    # get_channels()
+    check_bd()
