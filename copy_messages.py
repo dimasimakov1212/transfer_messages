@@ -7,6 +7,7 @@ from pyrogram.types import Message
 import asyncio
 
 import sqlite3
+from contextlib import closing
 
 from services import writing_json, reading_json, get_last_message_id
 
@@ -89,8 +90,14 @@ async def copy_content(from_channel_id: int, channel_tags: str, messages_number=
         if message.photo:
             photo = await message.download(in_memory=True)  # скачиваем фото
 
-            # отправляем сообщение в общий канал
-            await client.send_photo(chat_id=to_channel_id, photo=photo, caption=message.caption)
+            # отправляем фото и сообщение в общий канал
+            await client.send_photo(chat_id=to_channel_id, photo=photo, caption='')
+
+            text = message.caption  # получаем текст сообщения
+
+            new_text = f"{channel_tags}\n\n" + text  # добавляем хэштеги в начало сообщения
+
+            await client.send_message(chat_id=to_channel_id, text=new_text)
 
             time.sleep(1)
 
@@ -98,8 +105,14 @@ async def copy_content(from_channel_id: int, channel_tags: str, messages_number=
         if message.video:
             video = await message.download(in_memory=True)  # скачиваем видео
 
-            # отправляем сообщение в общий канал
-            await client.send_video(chat_id=to_channel_id, video=video, caption=message.caption)
+            # отправляем видео и сообщение в общий канал
+            await client.send_video(chat_id=to_channel_id, video=video, caption='')
+
+            text = message.caption  # получаем текст сообщения
+
+            new_text = f"{channel_tags}\n\n" + text  # добавляем хэштеги в начало сообщения
+
+            await client.send_message(chat_id=to_channel_id, text=new_text)
 
             time.sleep(1)
 
@@ -145,71 +158,49 @@ async def copy_content(from_channel_id: int, channel_tags: str, messages_number=
 
         time.sleep(1)
 
+        # # Устанавливаем соединение с базой данных
+        connection = sqlite3.connect('channels_database.db', timeout=10)
+
+        cursor = connection.cursor()  # создаем курсор
+
+        # обновляем данные о последнем скопированном сообщении в БД
+        cursor.execute('UPDATE Channels SET last_message_id = ? WHERE channel_id = ?',
+                       (message.id, from_channel_id))
+
+        connection.commit()  # сохраняем изменения в БД
+
+        connection.close()
+
     await client.stop()
 
     return last_message_id
-
-
-# def start_copying():
-#     """ Запуск пересылки сообщений """
-#
-#     # получаем список словарей каналов, где
-#     # ключ словаря - это ID канала, значение - ID последнего скопированного сообщения
-#     channels_list = reading_json()
-#
-#     # новый список каналов
-#     new_channels_list = []
-#
-#     # перебираем каналы из списка
-#     for channel in channels_list:
-#         for key, value in channel.items():
-#             channel_id = int(key)  # ID канала
-#             last_copied_message_id = value  # ID последнего скопированного сообщения
-#
-#             # получаем ID последнего сообщения из канала
-#             last_message_id = asyncio.run(get_last_message_id(channel_id))
-#
-#             # получаем количество сообщений, которые необходимо переслать
-#             messages_number = last_message_id - last_copied_message_id
-#
-#             # проверяем есть ли не переправленные сообщения
-#             if messages_number > 0:
-#
-#                 # запускаем копирование сообщений
-#                 channel_last_message = asyncio.run(copy_content(from_channel_id=channel_id,
-#                                                                 messages_number=messages_number))
-#
-#                 # добавляем данные канала в новый список
-#                 new_channels_list.append(channel_last_message)
-#
-#             else:
-#                 print('Новых сообщений нет')
-#                 new_channels_list.append(channel)
-#
-#             time.sleep(2)
-#
-#     # записываем обновленные данные о каналах
-#     writing_json(new_channels_list)
 
 
 def start_copying():
     """ Запуск пересылки сообщений """
 
     # Устанавливаем соединение с базой данных
-    connection = sqlite3.connect('channels_database.db')
+    connection = sqlite3.connect('channels_database.db', timeout=10)
+
     cursor = connection.cursor()  # создаем курсор
 
     cursor.execute('SELECT * FROM Channels')  # получаем данные о каналах из БД
     channels_list = cursor.fetchall()  # получаем список каналов
-    print(channels_list)
+
+    connection.close()
+
+    # print(channels_list)
 
     # перебираем каналы из списка
     for channel in channels_list:
+        print('Перебираю каналы')
+        print(channel)
 
         channel_id = int(channel[2])  # ID канала
         last_copied_message_id = channel[3]  # ID последнего скопированного сообщения
         channel_tags = channel[4]  # хэштеги канала
 
+        print('Получаю последнее сообщение')
         # получаем ID последнего сообщения из канала в данный момент
         last_message_id = asyncio.run(get_last_message_id(channel_id))
         print(last_message_id)
@@ -220,25 +211,21 @@ def start_copying():
 
         # проверяем есть ли не переправленные сообщения
         if messages_number > 0:
+            print('Начал копировать')
 
             # запускаем копирование сообщений
             channel_last_message = asyncio.run(copy_content(from_channel_id=channel_id,
                                                             channel_tags=channel_tags,
                                                             messages_number=messages_number
                                                             ))
-
-            # обновляем данные о последнем скопированном сообщении в БД
-            cursor.execute('UPDATE Channels SET last_message_id = ? WHERE channel_id = ?',
-                           (channel_last_message, channel_id))
-
-            connection.commit()  # сохраняем изменения в БД
+            print('Скопировал')
 
         else:
             print('Новых сообщений нет')
 
         time.sleep(2)
 
-    connection.close()  # закрываем соединение с БД
+    # connection.close()
 
 
 if __name__ == '__main__':
@@ -246,5 +233,19 @@ if __name__ == '__main__':
     # запуск пересылки последних сообщений в общий канал
     # пересылаться будут сообщения, которые еще не пересылались
     # если новых сообщений нет, в терминал выводится сообщение
-    start_copying()
+    def start_program():
+        while True:
+            try:
+                print('Запускаю')
+                start_copying()
+            except Exception as e:
+                print(e)
+
+                time.sleep(30)
+                continue
+            print('------ Жду ------')
+            time.sleep(60)
+
+    start_program()
+    # start_copying()
     # a = asyncio.run(get_message_from_channel(-1001369541919, 6725))

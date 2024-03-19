@@ -143,11 +143,27 @@ def check_bd():
     connection.close()  # закрываем соединение с БД
 
 
+def change_bd():
+    # Устанавливаем соединение с базой данных
+    connection = sqlite3.connect('channels_database.db')
+    cursor = connection.cursor()  # создаем курсор
+
+    cursor.execute('UPDATE Channels SET last_message_id = ? WHERE channel_id = ?',
+                   (2756, -1001889919348))
+    connection.commit()  # сохраняем изменения в БД
+    ch = cursor.fetchall()
+    print(ch)
+
+    connection.close()  # закрываем соединение с БД
+
+
 if __name__ == '__main__':
 
     # Запуск поиска каналов из файла my_channels.txt со списком каналов (ботов, чатов)
     # формируется файл last_messages.json, в котором хранятся данные в виде:
     # ID канала: ID последнего сообщения в канале
     # при последующем запуске пересылки сообщений, берутся сообщения начиная от этих данных
-    get_channels()
+    # get_channels()
     # check_bd()
+    # change_bd()
+    check_bd()
